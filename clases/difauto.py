@@ -28,37 +28,33 @@ class DifAuto(object):
     def _repr_latex_(self):
         return "$[{}, {}]$".format(self.valor, self.deriv)
 
-    # Operaciones básicas
-    def __add__(self, otro):
-        
-        try:
-            return DifAuto(self.valor + otro.valor, self.deriv + otro.deriv)
 
+    def __pow__(self,n):
+        '''
+        Operacion potencia para jets.
+        '''
+        return DifAuto (self.valor**n, n*self.deriv*self.valor**(n-1))
+
+    def __add__(self, otro):
+        """
+        Derivación Suma
+        """
+        try:
+            return DifAuto (self.valor + otro.valor, self.deriv + otro.deriv)
+        
         except:
             return self + DifAuto(otro)
             
     def __radd__(self, otro):
         
         return self + otro
-
-    def __sub__(self, otro):
-        
-        try:
-            return DifAuto(self.valor - otro.valor, self.deriv - otro.deriv)
-
-        except:
-            return self - DifAuto(otro)
-
-    def __rsub__(self, otro):
-        
-        return self - otro
         
     def __mul__(self, otro):
         """
         Derivación Multiplicación
         """
         try:
-            return DifAuto ( self.valor * otro.valor, self.valor * otro.deriv + self.deriv * otro.valor)
+            return DifAuto ( self.valor * otro.valor, otro.deriv * self.valor + self.deriv * otro.valor)
         
         except:
             return self * DifAuto (otro)
@@ -66,16 +62,32 @@ class DifAuto(object):
     def __rmul__(self, otro):
         return self * otro
     
+    def __sub__(self, otro):
+        """
+        Derivación Resta
+        """
+        if not isinstance(otro, DifAuto):
+            otro = DifAuto (otro)
+        
+        return DifAuto (self.valor - otro.valor, self.deriv - otro.deriv)                
+        
+    def __rsub__(self, otro):
+        
+        if not isinstance(otro, DifAuto):
+            otro = DifAuto (otro)
+            
+        return DifAuto.__sub__(otro, self)
+        
     def __div__(self, otro):
         """
         División
         """
-        try:
-            return DifAuto(self.valor/otro.valor, (self.deriv*otro.valor - self.valor*otro.deriv)/otro.valor**2)
-
-        except:
-            return self/DifAuto(otro)
-
+        if not isinstance(otro, DifAuto):
+            otro = DifAuto (otro)
+        
+        a = DifAuto.__pow__(otro,-1)        
+        
+        return DifAuto.__mul__(self, a)
 
     def __rdiv__(self, otro):
         """
@@ -86,35 +98,29 @@ class DifAuto(object):
 
         return DifAuto.__div__(otro, self)
 
-    def __pow__(self, n):
-        '''
-        Operacion potencia para jets.
-        '''
-        return DifAuto (self.valor**n, n*self.valor**(n-1)*self.deriv)
-
     def exp(self):
         """
         Exponencial
         """
-        return DifAuto(math.exp(self.valor), math.exp(self.valor)*self.deriv)
-        
+        return DifAuto (math.exp(self.valor), self.deriv*math.exp(self.valor))
+       
     def log(self):
         """
         Logaritmo
         """
-        return DifAuto(math.log(self.valor), self.deriv / self.valor )
+        return DifAuto (math.log(self.valor), self.deriv * 1./(self.valor) )
     
     def sin(self):
         """
         Seno
         """
-        return DifAuto(math.sin(self.valor), math.cos(self.valor) * self.deriv)
+        return DifAuto (math.sin(self.valor), self.deriv * math.cos(self.valor))
             
     def cos(self):
         """
         Coseno
         """
-        return DifAuto(math.cos(self.valor), -math.sin(self.valor) * self.deriv)
+        return DifAuto (math.cos(self.valor), -self.deriv * math.sin(self.valor))
 
     def tan(self):
         """
